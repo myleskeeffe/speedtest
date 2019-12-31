@@ -11,14 +11,14 @@ $ServiceName = "Example Service";
 <html>
 <head>
 <title><?php echo $ServiceName;  ?></title>
-<link rel="stylesheet" href="bootstrap.min.css">
+<link rel="stylesheet" href="../bootstrap.min.css">
 </head>
 <body>
 <div class="jumbotron">
 <div style="text-align: center"><h1><?php echo $ServiceName; ?></h1></div>
 <?php
-include_once("telemetry_settings.php");
-require "idObfuscation.php";
+include_once("../telemetry_settings.php");
+require "../idObfuscation.php";
 if($stats_password=="PASSWORD"){
 	?>
 		Please set $stats_password in telemetry_settings.php to enable access.
@@ -41,12 +41,12 @@ if($stats_password=="PASSWORD"){
 			$conn = new PDO("pgsql:$conn_host;$conn_db;$conn_user;$conn_password");
 		}else die();
 ?>
-	<form action="stats.php" method="GET"><input type="hidden" name="op" value="logout" /><input class="btn btn-dark" style="position: absolute; top: 20px; right: 20px;" type="submit" value="Logout" /></form>
-	<form action="stats.php" method="GET">
+	<form action="" method="GET"><input type="hidden" name="op" value="logout" /><input class="btn btn-dark" style="position: absolute; top: 20px; right: 20px;" type="submit" value="Logout" /></form>
+	<form action="" method="GET">
 		<h3>Search test results</h6>
 		<div class="btn-group">
 		<input type="hidden" name="op" value="id" />
-		<input class="input-group"  type="text" name="id" id="id" placeholder="Test ID" value=""/>
+		<input class="input-group"  type="text" name="id" id="id" placeholder="Test ID or IP" value=""/>
 		<input class="btn btn-dark" type="submit" value="Find" />
 		<input class="btn btn-dark" type="submit" onclick="document.getElementById('id').value=''" value="Show last 100 tests" />
 		</div>
@@ -71,10 +71,14 @@ if($stats_password=="PASSWORD"){
 		$q=null;
 		if($_GET["op"]=="id"&&!empty($_GET["id"])){
 			$id=$_GET["id"];
+			$ip=strval($id);
+			if (strpos($id, ".") !== false) {
+				$id="a";
+			}
 			if($enable_id_obfuscation) $id=deobfuscateId($id);
 			if($db_type=="mysql"){
-				$q=$conn->prepare("select id,timestamp,ip,ispinfo,ua,lang,dl,ul,ping,jitter,log,extra from speedtest_users where id=?");
-				$q->bind_param("i",$id);
+				$q=$conn->prepare("select id,timestamp,ip,ispinfo,ua,lang,dl,ul,ping,jitter,log,extra from speedtest_users where id=? or ip =?");
+				$q->bind_param("is",$id,$ip);
 				$q->execute();
 				$q->store_result();
 				$q->bind_result($id,$timestamp,$ip,$ispinfo,$ua,$lang,$dl,$ul,$ping,$jitter,$log,$extra);
@@ -137,7 +141,7 @@ if($stats_password=="PASSWORD"){
 		?><script type="text/javascript">window.location=location.protocol+"//"+location.host+location.pathname;</script><?php
 	}else{
 ?>
-	<form action="stats.php?op=login" method="POST">
+	<form action="?op=login" method="POST">
 		<h3>Login</h3>
 		<input type="password" name="password" placeholder="Password" value=""/>
 		<input type="submit" value="Login" />
